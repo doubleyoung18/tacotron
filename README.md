@@ -62,6 +62,48 @@ Pull requests are welcome!
 
 
 
+### Measure performance for tacotron without Grifflin layers
+1. Set OpenMP configurations
+   ```
+   export OMP_NUM_THREADS=4
+   export KMP_BLOCKTIME=1
+   export KMP_AFFINITY=granularity=fine,compact,1,0
+   ```
+2. For single instance
+   ```
+   numactl --physcpubind 0-7 --membind 0 \
+   python eval.py \
+      --checkpoint /tmp/tacotron-20180906/model.ckpt \
+      --steps 100 \
+      --warmup-steps 10 \
+      --num-inter-threads 2 \
+      --num-intra-threads 4 \
+      --benchmark-only
+   ```
+3. For multi-instances
+   Set <HT-BEGIN> & <HT-END> in `numactl --physcpubind <HT-BEGIN>-<HT-END> --membind 0` to bind each instance to different threads. And combine instance commands with `&`.
+   Here is an example for two instances.
+   ```
+   numactl --physcpubind 0-7 --membind 0 \
+   python eval.py \
+      --checkpoint /tmp/tacotron-20180906/model.ckpt \
+      --steps 100 \
+      --warmup-steps 10 \
+      --num-inter-threads 2 \
+      --num-intra-threads 4 \
+      --benchmark-only & \
+   numactl --physcpubind 8-15 --membind 0 \
+   python eval.py \
+      --checkpoint /tmp/tacotron-20180906/model.ckpt \
+      --steps 100 \
+      --warmup-steps 10 \
+      --num-inter-threads 2 \
+      --num-intra-threads 4 \
+      --benchmark-only
+   ```
+
+
+
 ### Training
 
 *Note: you need at least 40GB of free disk space to train a model.*
